@@ -1,4 +1,4 @@
-# AI-Bubble```markdown
+# AI-Bubble
 # FIRE-Tactical Portfolio Rebalancer (Streamlit)
 
 A Streamlit app that generates **explainable, regime-aware portfolio recommendations** across **asset classes and regions** (US, Europe, Japan, Emerging Markets, etc.), with a dedicated **AI-cycle risk overlay** (concentration, supply-chain stress, “expectations risk”) and a **Scenario Engine** for stress-testing.
