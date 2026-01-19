@@ -20,7 +20,7 @@ import plotly.graph_objects as go
 # -----------------------------
 st.set_page_config(
     page_title="AI Bubble Diagnostics",
-    page_icon="🤖",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -257,12 +257,16 @@ def bar_gauge_fragment(
     value_0_100: float,
     marker_top_px: int = 42,
     bar_height_px: int = 18,
+    reserve_top_px: Optional[int] = None,
 ) -> str:
     v = float(np.clip(value_0_100, 0.0, 100.0))
     v_int = int(round(v))
 
+    # Reserve enough space above the bar so the marker never overlaps the subtitle.
+    reserve = int(reserve_top_px if reserve_top_px is not None else (marker_top_px + 6))
+
     return f"""
-<div class="gauge-bar-wrap" style="margin-top:16px;">
+<div class="gauge-bar-wrap" style="margin-top:12px; padding-top:{reserve}px;">
   <div class="gauge-bar" style="height:{bar_height_px}px;">
     <div class="gauge-marker" style="left:{v:.2f}%; top:-{marker_top_px}px;">
       <div class="gauge-marker-value">{v_int}</div>
@@ -360,7 +364,7 @@ html, body {
 </html>
 """.strip()
 
-    components.html(body, height=180)
+    components.html(body, height=205)
 
 
 # -----------------------------
@@ -976,6 +980,7 @@ st.markdown('<hr class="soft"/>', unsafe_allow_html=True)
 st.markdown('<hr class="soft"/>', unsafe_allow_html=True)
 st.markdown("## Appendix")
 
+
 def _card(title: str, body_html: str) -> None:
     st.markdown(
         f"""
@@ -988,6 +993,7 @@ def _card(title: str, body_html: str) -> None:
 """,
         unsafe_allow_html=True,
     )
+
 
 # --- Interpretation bands (AI Bubble Score + Crash Risk) ---
 _card(
@@ -1107,3 +1113,4 @@ _card(
 </ul>
 """,
 )
+
