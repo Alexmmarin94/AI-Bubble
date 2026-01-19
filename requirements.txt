@@ -19,3 +19,4 @@ requests==2.32.4           # Used if any script/page pulls remote resources
 python-dateutil==2.8.2     # Robust datetime parsing/handling
 pytz==2025.2               # Timezone support
 tzdata==2025.2             # Timezone database for some environments
+PyYAML==6.0.2
