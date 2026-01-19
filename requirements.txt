@@ -1,5 +1,6 @@
 # === App runtime (Streamlit UI) ===
 streamlit==1.47.0          # Web app framework
+tomli==2.2.1
 
 # === Core data stack ===
 pandas==2.3.1              # DataFrames used across pages
