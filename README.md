@@ -1,332 +1,239 @@
-# AI-Bubble
-# FIRE-Tactical Portfolio Rebalancer (Streamlit)
+# Bogle & AI Bubble — Deterministic Portfolio Insights Dashboard
 
-A Streamlit app that generates **explainable, regime-aware portfolio recommendations** across **asset classes and regions** (US, Europe, Japan, Emerging Markets, etc.), with a dedicated **AI-cycle risk overlay** (concentration, supply-chain stress, “expectations risk”) and a **Scenario Engine** for stress-testing.
+This repository contains the codebase for **Bogle & AI Bubble**, a Streamlit dashboard that consolidates a broad set of market indicators and transforms them into **transparent, rules-based portfolio insights** for a classic **Bogle-style allocation** (e.g., VTI / VXUS / BND) under elevated uncertainty—where a potential **AI-cycle bubble / fragility regime** is one of the main risks considered.
 
-> ⚠️ **Disclaimer**: This project is for educational and research purposes. It does **not** provide financial advice or personalized investment recommendations. Always do your own research and/or consult a licensed professional.
+The emphasis is **not** on “smart algorithms” or machine learning. It is a concept-first system: define the decision problem clearly, collect the relevant signals, encode the logic deterministically, and present outputs in a way that is usable and inspectable.
 
----
-
-## Why this exists
-
-Most portfolio tools either:
-- stay purely “strategic” (set-and-forget) and ignore the current cycle, or
-- go fully “tactical” with opaque black-box predictions.
-
-This app targets a pragmatic middle-ground, but it is explicitly designed around one dominant source of uncertainty today: the **AI bubble / AI-driven market regime**.
-
-The AI bubble is not just “tech concentration” or “chips supply constraints”. It is also a **financial equilibrium** built on:
-- **Extreme valuation dispersion and multiple expansion** in AI-related equities (and adjacent infrastructure plays),
-- **High capital intensity** (compute, datacenters, energy, memory) that can absorb a large share of investment flows,
-- **Profitability and break-even uncertainty** for many AI business models (especially at the application layer),
-- **Cost-of-capital sensitivity** (rates/credit conditions) that can quickly reprice long-duration growth assets,
-- **Second-order spillovers**: index concentration, factor crowding, capex cycles, and broader macro feedback loops.
-
-The product goal is not to “predict the top”, but to help users **manage portfolios and expectations under AI-bubble uncertainty** using transparent, bounded signals:
-
-- **Strategic Allocation (SAA)** as the anchor,
-- **Tactical Overlay (TAA)** as small, bounded tilts based on interpretable signals,
-- an **AI Bubble Overlay** that explicitly models the *valuation + funding + concentration + supply-chain* nexus,
-- and a **Scenario Studio** to stress-test the portfolio under plausible AI-bubble unwind paths.
+> **Disclaimer (not investment advice):** This is a personal research project and provides informational insights only. Nothing here is a recommendation to buy/sell securities or to time the market.
 
 ---
 
-## Core features
+## 🔗 Live Demo
 
-- **Macro/Market Regime Dashboard**: growth, inflation, rates/curve, financial stress, liquidity proxies.
-- **Regional Allocation Engine**: US vs Europe vs Japan vs EM tilts with guardrails.
-- **AI Bubble Overlay** (multi-pillar, transparent):
-  - **Concentration & crowding risk**: index/mega-cap dominance, factor exposure, optional prompts (equal-weight, diversifiers, ex-tech constraints).
-  - **Valuation & duration risk**: repricing sensitivity (multiple compression / long-duration equity exposure), “expectations vs cash-flow reality” flags.
-  - **Funding & capital intensity**: capex cycle proxies (datacenter buildout, compute supply, energy/memory bottlenecks) and implications for margins and macro.
-  - **Profitability gap tracking**: signals that separate “revenue growth” from “path to sustainable margins”.
-  - **Contagion scenarios**: how an AI-led drawdown propagates to broader equities, credit, and risk premia.
-- **Market Notes Tab** (plain-English bullets by bucket):
-  - S&P 500 / US equities (with AI-bubble framing)
-  - Europe / Japan / EM equities
-  - Bonds (gov/IG/HY), duration and equity-hedge role
-  - Gold / cash / defensive diversifiers
-  - “Based on current signals, consider increasing/reducing weight” with rationale
-- **Scenario Engine**: coherent shock sets and portfolio response (drawdown, volatility, contribution to risk).
-- **Auditability**: every recommendation is reproducible from stored signals + parameters (no black-box calls).
+**👉 Streamlit App:** https://bogleai-bubble-3gnctcftcpciv3izgvssyt.streamlit.app/
 
+> ⚠️ Streamlit Community Cloud apps may sometimes look inactive due to sleep/idle behavior.  
+> This project includes **daily automated refresh** (GitHub Actions) to keep datasets up to date, so it is likely to be active most days.  
+> If you ever see it sleeping and want it woken up for testing, contact: **alexbmeist@gmail.com**.
 
 ---
 
-## Data sources and ingestion
+## What This Project Is (and Is Not)
 
-We prioritize APIs with stable documentation and programmatic access.
+- ✅ A **deterministic, reproducible** pipeline that turns multiple public data inputs into **banded allocation insights**.
+- ✅ A dashboard that makes the **“why”** inspectable: drivers, persistence rules, and known limitations.
+- ✅ A **backtest-style simulator** that translates the same recommendation logic into actions for a hypothetical portfolio under DCA.
 
-### Macro & rates (official / institutional)
-- **FRED (St. Louis Fed)** for US macro series and market proxies. :contentReference[oaicite:3]{index=3}
-- **ECB Data Portal (SDMX REST)** for Euro Area / ECB-related series. Note: SDW endpoints are being repointed to the ECB Data Portal API (data-api). :contentReference[oaicite:4]{index=4}
-
-### Volatility / stress indicators
-- **VIX**: either directly from Cboe’s downloadable historical dataset or via FRED’s VIX series. :contentReference[oaicite:5]{index=5}
-- **Credit spreads**: e.g., ICE BofA High Yield OAS series. :contentReference[oaicite:6]{index=6}
-
-### Market prices (ETFs, indices proxies)
-- **Tiingo** End-of-Day prices + fundamentals (clean REST endpoints). :contentReference[oaicite:7]{index=7}
-- **Polygon** (optional) for broader market/reference endpoints (tickers, metadata, aggregates). :contentReference[oaicite:8]{index=8}
-- **OpenBB (optional)** as a unifying connector layer (ODP/Workspace integration) if we want to swap providers with minimal code changes. :contentReference[oaicite:9]{index=9}
+- ❌ Not a promise of outperformance.  
+- ❌ Not a system that claims it can reliably “predict crashes” or do market timing.  
+- ❌ Not a machine learning project (by design).  
 
 ---
 
-## External API endpoints (planned)
+## Dashboard Overview
 
-Below is the **project-level list** of endpoints we may call (not an exhaustive list of each provider’s full API surface).
+The app is organized into four tabs:
 
-### FRED (US macro) — base
-- Base: `https://api.stlouisfed.org/fred/` :contentReference[oaicite:10]{index=10}
+### 1) Daily Snapshot
+A quick read of the current regime and **persisted signals**. The signals shown here are the system’s **allocation recommendations** (subject to persistence rules and banding), with supporting drivers.
 
-**Endpoints**
-- Series metadata:  
-  `https://api.stlouisfed.org/fred/series?series_id={SERIES_ID}&api_key={KEY}&file_type=json` :contentReference[oaicite:11]{index=11}
-- Observations (time series):  
-  `https://api.stlouisfed.org/fred/series/observations?series_id={SERIES_ID}&api_key={KEY}&file_type=json` :contentReference[oaicite:12]{index=12}
-- (Optional) Real-time vintage parameters for revision-aware studies:  
-  same endpoint with `realtime_start` / `realtime_end` :contentReference[oaicite:13]{index=13}
+### 2) AI Bubble Diagnostics
+Leadership, concentration, and fragility diagnostics combined into an **AI Bubble Score** and an amplified **Crash Risk**. These are **additional insights** intended to reinforce (or challenge) the guardrails implied by the Daily Snapshot.
 
-**Common series we’ll likely use**
-- S&P 500 price index: `SP500` :contentReference[oaicite:14]{index=14}
-- VIX: `VIXCLS` :contentReference[oaicite:15]{index=15}
-- High yield OAS: `BAMLH0A0HYM2` :contentReference[oaicite:16]{index=16}
+### 3) Portfolio Actions & Backtest
+Materializes the reallocation recommendations using a hypothetical **VTI/VXUS/BND** portfolio and a fixed **DCA schedule** (contributions on day 1 & 15; invested on the next trading day close). It also compares how those actions would have performed vs a benchmark under the same cashflows.
 
-### ECB Data Portal (Euro area / EU macro) — SDMX REST
-- Overview: `https://data.ecb.europa.eu/help/api/overview` :contentReference[oaicite:17]{index=17}
-- Data API entry point (noted by ECB): `https://data-api.ecb.europa.eu` :contentReference[oaicite:18]{index=18}
-
-**Endpoints (SDMX REST pattern)**
-- Data retrieval pattern (ECB docs):  
-  `protocol://wsEntryPoint/resource/flowRef/key?parameters` :contentReference[oaicite:19]{index=19}
-- SDMX data mode documentation:  
-  `https://data.ecb.europa.eu/help/getting-data-web-services-sdmx` :contentReference[oaicite:20]{index=20}
-
-> Implementation note: ECB queries are SDMX-structured; we’ll provide a small “data discovery helper” module to find flowRef and key definitions when adding new series.
-
-### Cboe VIX (direct download)
-- VIX historical data download page:  
-  `https://www.cboe.com/tradable_products/vix/vix_historical_data` :contentReference[oaicite:21]{index=21}
-
-### Tiingo (market prices / fundamentals)
-- Latest/historical daily prices:  
-  `https://api.tiingo.com/tiingo/daily/{TICKER}/prices` :contentReference[oaicite:22]{index=22}
-- Fundamentals (definitions / metrics endpoints):  
-  `https://api.tiingo.com/tiingo/fundamentals/` :contentReference[oaicite:23]{index=23}
-- Tiingo documentation root:  
-  `https://www.tiingo.com/documentation/` :contentReference[oaicite:24]{index=24}
-
-### Polygon (optional, for reference/metadata/aggregates)
-- Reference APIs docs (Python wrapper docs; used as guidance for endpoints):  
-  `https://polygon.readthedocs.io/en/latest/References.html` :contentReference[oaicite:25]{index=25}
-
-> If Polygon is enabled, we’ll add endpoints for ticker discovery/metadata and aggregates as needed.
-
-### OpenBB (optional integration layer)
-- OpenBB docs root: `https://docs.openbb.co/` :contentReference[oaicite:26]{index=26}
-- ODP Python docs: `https://docs.openbb.co/python` :contentReference[oaicite:27]{index=27}
-- Data integration docs (custom backend idea):  
-  `https://docs.openbb.co/workspace/developers/data-integration` :contentReference[oaicite:28]{index=28}
+### 4) Resources
+Supporting reading and definitions that help answer “why” questions, such as:
+- why certain actionables are framed as **Bogle-compatible** (vs. market timing),
+- why some market conditions can justify **higher monitoring** even under a Bogle philosophy,
+- and deeper notes on the **technical framework** and known limitations for anyone who wants to inspect details.
 
 ---
 
-## Analysis logic (high level)
+## 🖼️ Visual Preview (In Case the Demo Is Unavailable)
 
-### 1) Build a “Regime Score” (macro + market stress)
-We compute a composite score from:
-- **Growth** proxies
-- **Inflation** trend/surprises
-- **Rates/Curve** proxies
-- **Financial stress** proxies (VIX + credit spreads)
+Screenshots are included in `Screenshots/` (as `Screenshot_1.png` … `Screenshot_8.png`) in the same order as below:
 
-Then classify into a small set of regimes:
-- Risk-on
-- Neutral
-- Risk-off
-- Inflationary
-- Recessionary
+1) Home navigation (4 cards + “Open” buttons)  
+![Screenshot 1](Screenshots/Screenshot_1.png)
 
-The app always shows:
-- latest values,
-- rolling context (recent history),
-- how each signal influenced the regime classification.
+2) Daily Snapshot (stress + drivers + allocation summaries)  
+![Screenshot 2](Screenshots/Screenshot_2.png)
 
-### 2) Strategic allocation (SAA) as the anchor
-Each risk profile maps to a baseline global allocation:
-- equities split by region (US / Europe / Japan / EM),
-- bonds split by type/duration (gov / IG / HY),
-- diversifiers (gold/cash).
+3) AI Bubble Diagnostics (scores + interpretability)  
+![Screenshot 3](Screenshots/Screenshot_3.png)
 
-### 3) Tactical overlay (TAA) with guardrails
-Regime-dependent tilts are applied **within tight bounds** (e.g., ±5–15 percentage points by bucket), so the system remains “portfolio management”, not trading.
+4) Band guidance and drivers  
+![Screenshot 4](Screenshots/Screenshot_4.png)
 
-### 4) AI-cycle overlay (dedicated logic)
-This overlay does not “predict AI”; it manages **portfolio risk created by AI-cycle dynamics**.
+5) Stress amplifiers time series  
+![Screenshot 5](Screenshots/Screenshot_5.png)
 
-**Signals and mechanics**
-- **Concentration risk**
-  - Detect heavy dependence on top holdings / US large-cap dominance.
-  - Optional mitigations: more ex-US allocation, equal-weight style, factor diversification. :contentReference[oaicite:29]{index=29}
-- **Supply-chain stress**
-  - Track proxies related to memory/HBM scarcity and production shifts that can propagate into device markets and capex cycles. :contentReference[oaicite:30]{index=30}
-- **Expectations risk**
-  - Push the user to evaluate “what if AI multiples compress?” via scenarios rather than narratives.
+6) Portfolio Actions & Backtest (allocation translation)  
+![Screenshot 6](Screenshots/Screenshot_6.png)
+
+7) Backtest overview (full period)  
+![Screenshot 7](Screenshots/Screenshot_7.png)
+
+8) Backtest zoom (COVID shock example window)  
+![Screenshot 8](Screenshots/Screenshot_8.png)
 
 ---
 
-## Scenario Engine
+## Data Inputs (High Level)
 
-The Scenario Engine runs a small set of coherent “macro + market” shocks and reports:
-- expected drawdown range (based on historical analogs / stress factors),
-- volatility uplift,
-- contribution to risk by bucket,
-- recovery sensitivity (optional).
+The pipeline pulls and maintains a curated dataset from multiple public sources, such as:
 
-**Default scenarios (v1)**
-- AI drawdown (tech/semis shock + spread widening + VIX spike)
-- Soft landing
-- Stagflation
-- Recession
-- Rates up / duration shock
+- **Market prices** (ETFs used as benchmarks / sleeves)
+- **Macro and rates** (yields, spreads, volatility proxies)
+- **Public SDMX sources** (ECB / IMF endpoints)
+- **Context-only fundamentals** (SEC feeds used as contextual inputs, where applicable)
 
-Users can:
-- tweak probabilities (optional),
-- toggle scenario severity (light/standard/severe),
-- export scenario results.
+Exact series and transformations are documented in the **Resources** tab and in the technical markdowns under `content/learn/`.
 
 ---
 
-## Streamlit app structure (tabs)
+## Processing Pipeline (Daily Updates)
 
-Proposed Streamlit navigation:
+A GitHub Actions workflow runs a full refresh pipeline. At a high level:
 
-1. **Welcome / Mode Selector**
-   - Light vs Advanced
-   - “What this tool is / isn’t”
+1. Backfill / update raw sources (incrementally).
+2. Build derived datasets used by the app (Parquet/JSON “state” files).
+3. Commit updated outputs back to the repository so Streamlit Cloud can render the latest state.
 
-2. **Data Status**
-   - API keys configured?
-   - last refresh timestamps
-   - dataset coverage warnings
+The orchestration entrypoint is:
 
-3. **Market Regime Dashboard**
-   - regime classification
-   - signal decomposition (growth/inflation/rates/stress)
+- `scripts/99_update_all.py`
 
-4. **AI-Cycle Dashboard**
-   - concentration indicators
-   - supply-chain stress indicators (memory/HBM proxies)
-   - “risk map” for AI-sensitive exposure
+Typical outputs include:
 
-5. **Market Notes (Actionable Bullets)**
-   - US / Europe / Japan / EM
-   - Bonds (gov/IG/HY, duration posture)
-   - Gold / cash
-   - Each bullet ties back to current regime + AI overlay
+- `data/state/daily_state/*.json`
+- `data/state/daily_state_history/*.parquet`
+- `data/state/portfolio_targets_history/*.parquet`
+- `data/state/backtests/*.parquet`
 
-6. **Portfolio Analyzer**
-   - current exposures by asset class + region
-   - risk metrics (rolling vol, drawdowns, correlations)
-   - concentration metrics
-
-7. **Recommendations**
-   - target weights
-   - rebalance steps (what to change)
-   - rationale (signal-by-signal)
-
-8. **Scenario Studio**
-   - run default scenarios
-   - adjust severity
-   - compare current vs recommended portfolio
-
-9. **About / Methodology**
-   - assumptions
-   - limitations
-   - citations and data sources
+> Note: daily state is constrained by **trading days** and by upstream data publication cadence.  
+> If markets are closed or an upstream source hasn’t published new values yet, a “today” file may not be produced.
 
 ---
 
-## Tentative folder structure
+## Folder and File Structure (Simplified)
 
-This is a first proposal and will evolve as the app matures.
-
-```
-.
+```text
+root/
+│
 ├── app/
-│   ├── Home.py
-│   ├── pages/
-│   │   ├── 01_Data_Status.py
-│   │   ├── 02_Market_Regime.py
-│   │   ├── 03_AI_Cycle.py
-│   │   ├── 04_Market_Notes.py
-│   │   ├── 05_Portfolio_Analyzer.py
-│   │   ├── 06_Recommendations.py
-│   │   ├── 07_Scenario_Studio.py
-│   │   └── 08_Methodology.py
-│   └── ui/
-│       ├── components.py
-│       └── styles.py
-├── src/
-│   ├── config/
-│   │   ├── settings.py
-│   │   └── tickers_universe.yaml
-│   ├── data/
-│   │   ├── clients/
-│   │   │   ├── fred_client.py
-│   │   │   ├── ecb_sdmx_client.py
-│   │   │   ├── tiingo_client.py
-│   │   │   └── cboe_client.py
-│   │   ├── cache.py
-│   │   └── pipelines.py
-│   ├── features/
-│   │   ├── macro_signals.py
-│   │   ├── stress_signals.py
-│   │   ├── concentration_signals.py
-│   │   └── ai_supplychain_signals.py
-│   ├── allocation/
-│   │   ├── strategic_allocations.py
-│   │   ├── tactical_overlay.py
-│   │   ├── regional_tilts.py
-│   │   └── recommendation_engine.py
-│   ├── scenarios/
-│   │   ├── scenario_definitions.py
-│   │   ├── scenario_engine.py
-│   │   └── reporting.py
-│   ├── portfolio/
-│   │   ├── analytics.py
-│   │   ├── risk.py
-│   │   └── rebalancing.py
-│   └── utils/
-│       ├── dates.py
-│       ├── logging.py
-│       └── validation.py
-├── tests/
-│   ├── unit/
-│   └── integration/
-├── data_samples/
-│   └── example_portfolios/
-├── .streamlit/
-│   └── config.toml
+│   ├── Home.py                       # Streamlit entrypoint (homepage)
+│   └── pages/
+│       ├── 01_Daily_Snapshot.py
+│       ├── 02_AI_Bubble_Diagnostics.py
+│       ├── 03_Portfolio_Actions_Backtest.py
+│       └── 04_Learn_Glossary.py      # “Resources” tab (markdown library)
+│
+├── content/
+│   └── learn/                        # Markdown resources rendered in the app
+│
+├── data/
+│   ├── raw/                          # Cached raw inputs (some are large / externalized)
+│   └── state/                        # Derived state consumed by the Streamlit UI
+│
+├── scripts/                          # Data refresh + state builders
+├── .github/workflows/                # Daily refresh workflow
 ├── requirements.txt
-├── README.md
-└── LICENSE
-
+└── README.md
 ```
 
 ---
 
-## Next steps (implementation order)
+## Secrets and Configuration
 
-1) Implement data clients + caching (FRED + ECB + Tiingo + VIX source). :contentReference[oaicite:31]{index=31}  
-2) Build the Market Regime computation and visualization.  
-3) Add Portfolio Analyzer (exposures, drawdowns, correlations).  
-4) Add Recommendations engine (SAA + bounded TAA).  
-5) Implement AI-cycle overlay (concentration + supply-chain + expectations scenarios). :contentReference[oaicite:32]{index=32}  
-6) Implement Scenario Studio and exportable reports.
+This project supports three execution environments:
+
+### 1) Local development
+Create `.streamlit/secrets.toml` (not committed) with keys and config, for example:
+
+```toml
+# Core APIs
+FRED_API_KEY = "..."
+TIINGO_API_KEY = "..."
+SEC_USER_AGENT = "Bogle_AI-Bubble/0.1 (contact: you@example.com)"
+
+# SDMX endpoints
+ECB_SDMX_BASE_URL = "https://data-api.ecb.europa.eu/service"
+IMF_SDMX_BASE_URL = "https://sdmxcentral.imf.org/ws/public/sdmxapi/rest"
+
+# App config
+APP_ENV = "local"
+CACHE_TTL_SECONDS = 3600
+HTTP_TIMEOUT_SECONDS = 30
+HTTP_MAX_RETRIES = 3
+HTTP_BACKOFF_SECONDS = 1.0
+```
+
+### 2) GitHub Actions (daily refresh)
+Secrets are stored as a **single TOML secret** and written at runtime into `.streamlit/secrets.toml` before running the refresh scripts.
+
+### 3) Streamlit Community Cloud
+Define the same variables in the Streamlit app settings (`Advanced settings → Secrets`) using TOML format.
 
 ---
 
-## License
-Choose a permissive license (MIT/Apache-2.0) unless you plan to commercialize.
+## Large Files (IMF Structures XML)
+
+Some IMF “structures” XML files can exceed GitHub’s per-file limit. The approach used here is:
+
+- Store compressed XML assets in **GitHub Release assets**
+- Download them during the GitHub Actions refresh job
+- Cache/refresh them as needed as part of the pipeline
+
+This keeps the repo lightweight while preserving reproducibility.
+
+---
+
+## Local Setup
+
+```bash
+# Create and activate a virtualenv (example)
+python -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Add secrets
+mkdir -p .streamlit
+# Create .streamlit/secrets.toml with your keys (see section above)
+
+# Run the app
+streamlit run app/Home.py
 ```
 
+---
+
+## Deployment (Streamlit Cloud)
+
+- Connect the GitHub repo in Streamlit Cloud
+- Set:
+  - **Main file path**: `app/Home.py`
+  - **Python version**: as supported by Streamlit Cloud (typically 3.11)
+- Add your TOML secrets in Streamlit Cloud settings
+- Deploy
+
+---
+
+## Why This Is a Useful Portfolio Piece (Fintech / Product Analytics Lens)
+
+This project intentionally prioritizes **product thinking** over “complexity for its own sake”:
+
+- The system is **inspectable**: deterministic rules, explicit drivers, clear persistence logic, and documented limitations.
+- It converts a broad and messy set of signals into **practical outputs**: banded recommendations, a consistent narrative, and a backtest-based sanity check.
+- It demonstrates an end-to-end workflow: data ingestion → state building → automated refresh → UI delivery.
+
+In many real fintech settings, the hard part is not “adding ML,” but **defining the problem correctly**, building the right guardrails, and communicating outputs responsibly.
+
+---
+
+## Contact
+
+**Alex (Alexmmarin94)** — alexbmeist@gmail.com
