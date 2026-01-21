@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Comments in English as requested.
 
 from __future__ import annotations
 
@@ -27,20 +26,20 @@ def main() -> None:
     run([sys.executable, "scripts/02_backfill_tiingo_from_2012.py"], cwd=root)
     run([sys.executable, "scripts/01_backfill_fred_from_2012.py"], cwd=root)
 
-    # 2) Panels / derived time series used by Tab 1-2 (your renamed script)
+    # 2) Panels / derived time series used by backtests and diagnostics
     run([sys.executable, "scripts/06.1_build_backtest_panels.py"], cwd=root)
 
-    # 3) Daily state history (incremental action dates)
+    # 3) Daily State (current) — must run BEFORE history builds so the same run is consistent
+    run([sys.executable, "scripts/06_build_daily_state.py"], cwd=root)
+
+    # 4) Daily state history (incremental action dates) — now can include today's daily_state
     run([sys.executable, "scripts/07_build_daily_state_history.py"], cwd=root)
 
-    # 4) Portfolio targets history (incremental)
+    # 5) Portfolio targets history (incremental) — derived from the updated history/state
     run([sys.executable, "scripts/07.1_build_portfolio_targets_history.py"], cwd=root)
 
-    # 5) Portfolio performance history
+    # 6) Portfolio performance history — should be last since it depends on targets/history/panels
     run([sys.executable, "scripts/08_build_portfolio_performance_history.py"], cwd=root)
-
-    # 6) Daily State (current)
-    run([sys.executable, "scripts/06_build_daily_state.py"], cwd=root)
 
     print("\n[OK] All updates completed.")
 
